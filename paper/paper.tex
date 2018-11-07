@@ -1,0 +1,49 @@
+%!TEX program = lualatex
+\documentclass[a4paper, 11pt]{scrartcl}
+
+\usepackage{csquotes}
+%%\usepackage[french]{babel}
+%%\usepackage[ngerman]{babel}
+
+
+%% Choose default font for the document
+%% Warning : only ONE of the following should be enabled
+\usepackage{kpfonts}
+%%\usepackage{libertine}
+
+%% The following chose the default language for the document and
+%% use the default typography rules for the choosen language.
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+%% \setdefaultlanguage{german}
+%%\setdefaultlanguage{french}
+
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{paper.bib}
+
+\usepackage{graphicx}
+
+
+%% to cite use \cite{Jerald:2015:VBH:2792790}
+\begin{document}
+\title{The DAO and why it no longer exists}
+\date{\today}   %% or \date{01 november 2018}
+\author{Ramon Boss (\texttt{ramon.boss@students.bfh.ch}) \\
+ Julian Stampfli (\texttt{julianjimmy.stampfli@students.bfh.ch}) }
+\maketitle
+\setcounter{tocdepth}{2}
+\tableofcontents
+\clearpage
+
+\section{Introduction}
+
+\section{Why DAO?}
+
+\section{Conclusion}
+
+\nocite{*}
+\clearpage
+%% Print the bibibliography and add the section to the table of content
+\printbibliography[heading=bibintoc]
+
+\end{document}

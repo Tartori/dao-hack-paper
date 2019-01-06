@@ -82,7 +82,9 @@ Soon after, on June 18 2016, an unknown party was able to drain the funds of the
 
 The DAO includes the functionality to split the DAO. This was intended for people who either want to retrieve their funds or who weren't happy with the decisions of the DAO and wanted to invest differently. Everybody could split the DAO at any time with a one week waiting period.
 
-The split function has on
+The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut. The first two functions are defined in the DAO code and as such can't be changed at will. The payout function however is in the attackers hands. He can do there whatever he desires. This is mostly used for logging or other custom implementations.
+
+But only with this we can't create an attack. If the splitDAO and the withdrawRewardFor functions were implemented correctly a call to external code would be harmless. However, the splitDAO function first calls withdrawRewardFor and then sets the balance of the user to 0. With this if splitDAO gets called multiple times withdrawRewardFor will return the tokens multiple times. 
 
 \section{What was the fallout?}
 

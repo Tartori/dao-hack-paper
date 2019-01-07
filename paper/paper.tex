@@ -135,15 +135,78 @@ He was able to retrieve 3.5M ether which at that times would have been around 45
 
 \subsection{How was that possible?}
 
-The DAO includes the functionality to split the DAO.
+The DAO includes the already mentioned functionality to split the DAO.
 This was intended for people who either want to retrieve their funds or who weren't happy with the decisions of the DAO and wanted to invest differently.
 Everybody could split the DAO at any time with a one-week waiting period.
 
-The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut. The first two functions are defined in the DAO code and as such can't be changed at will. The payout function however is in the attackers hands. He can do there whatever he desires. This is mostly used for logging or other custom implementations.
+The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut which in turn calls \textunderscore recipient.call.value. The first two functions are defined in the DAO code and as such can't be changed at will. The call to recipient however is in the attackers hands. He can do there whatever he desires. In code this looks like that: \cite{deconstructingDaoAttack}
 
-But only with this we can't create an attack. If the splitDAO and the withdrawRewardFor functions were implemented correctly a call to external code would be harmless. However, the splitDAO function first calls withdrawRewardFor and then sets the balance of the user to 0. With this if splitDAO gets called multiple times withdrawRewardFor will return the tokens multiple times. 
+\begin{verbatim}
+  function withdrawRewardFor(address _account) noEther 
+    internal returns (bool _success) {
+        if ((balanceOf(_account) * rewardAccount.accumulatedInput()) /
+          totalSupply < paidOut[_account])
+            throw;
+
+        uint reward =
+            (balanceOf(_account) * rewardAccount.accumulatedInput()) /
+              totalSupply - paidOut[_account];
+        if (!rewardAccount.payOut(_account, reward))
+            throw;
+        paidOut[_account] += reward;
+        return true;
+    }
+
+    function payOut(address _recipient, uint _amount) returns (bool) {
+        if (msg.sender != owner || msg.value > 0 ||
+          (payOwnerOnly && _recipient != owner))
+            throw;
+        if (_recipient.call.value(_amount)()) {
+            PayOut(_recipient, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+\end{verbatim}
+
+One remark to this, some days before the attack there was a security fix proposed to the DAO master on Github, but wasn't committed immediately. With this fix the attack would not have been possible in this form. \cite{securityFixPayout}
+
+Event though this had flaws, it alone wouldn't have been enough for this particular exploit. One more glaring flaw is in the splitDAO function itself: \cite{deconstructingDaoAttack}
+
+\begin{verbatim}
+        // Burn DAO Tokens
+        Transfer(msg.sender, 0, balances[msg.sender]);
+        withdrawRewardFor(msg.sender); // be nice, and get his rewards
+        totalSupply -= balances[msg.sender];
+        balances[msg.sender] = 0;
+        paidOut[msg.sender] = 0;
+        return true;
+\end{verbatim}
+
+As you can see from this snippet which comes from the splitDAO function, the withdrawRewardFor function gets called and then the balance of the sender gets set to 0. This way, if someone can call splitDAO recursively, withdrawRewardFor will get called multiple times with the same arguments. With this anybody could basically retrieve the whole investment by recursively calling splitDAO. However, it is important to note that if the call stack gets to big, it might fail due to a stack overflow or other issues. Thus, one attacker can only retrieve a limited amount of ether. The call stack would look something like this: \cite{deconstructingDaoAttack}
+
+\begin{verbatim}
+splitDAO:
+  withdrawRewardFor:
+    rewardAccount.payOut:
+      _recipient.call.value:
+        splitDAO:
+          withdrawRewardFor:
+            rewardAccount.payOut:
+              _recipient.call.value:
+                ...  
+                  splitDAO:
+                    withdrawRewardFor:
+                      rewardAccount.payOut:
+                        _recipient.call.value
+\end{verbatim}
+
+After the attacker exploited this he had a child DAO with more funds than it should have and a parent DAO which doesn't suspect that anything went wrong. To make things even worse, he was able to send back tokens to restart the attack. Only this way he was able to get this many ether out of it. \cite{deconstructingDaoAttack}
 
 \section{What was the fallout?}
+
+
 
 \section{Conclusion}
 

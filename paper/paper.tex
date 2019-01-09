@@ -132,13 +132,11 @@ As one ether was worth about 10-12 Dollars at that time, this corresponds to abo
 Soon after, on June 18, 2016, an unknown party was able to drain the funds of the DAO by exploiting a security bug that was present in the function that is used to withdraw the ether.
 He was able to retrieve 3.5M ether which at that times would have been around 45 million dollars.
 
-\subsection{How was that possible?}
-
 The DAO includes the already mentioned functionality to split the DAO.
 This function was intended for people who either want to retrieve their funds or who weren't happy with the decisions of the DAO and wanted to invest differently.
 Everybody could split the DAO at any time with a one-week waiting period.
 
-The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut which in turn calls \textunderscore recipient.call.value. The first two functions are defined in the DAO code and as an attacker can't change it at will. The call to the recipient, however, is in the attacker's hands and as such, he can do there whatever he desires. This function is used to transfer token to an address by calling a function on that address. In code this looks like that: \cite{deconstructingDaoAttack}
+The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut which in turn calls \textunderscore recipient.call.value. The first two functions are defined in the DAO code and as such an attacker can't change it at will. The call to the recipient, however, is in the attacker's hands and as such, he can do there whatever he desires. This function is used to transfer token to an address by calling a function on that address. In code this looks like that: \cite{deconstructingDaoAttack}
 
 \begin{lstlisting}[language=Solidity]
   function withdrawRewardFor(address _account) noEther 

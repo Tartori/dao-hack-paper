@@ -24,8 +24,8 @@
 \begin{document}
 
 \title{The DAO}
-\subtitle{The Decentralized Autonomous Organization}
-\author{Ramon Boss}
+\subtitle{Hacked}
+\author{Julian Stampfli}
 
 \frame{\titlepage}
 
@@ -35,11 +35,195 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{What is The DAO}
+\section{Introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}
-\frametitle{What is The DAO}
+
+\begin{frame}[fragile]
+  \frametitle{Blockchain}
+  \begin{itemize}
+    \item Immutable
+    \item Link to parent
+    \item Transactions
+  \end{itemize}
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Ethereum}
+  \begin{itemize}
+    \item Cryptocurrency
+    \item Powerful Programming Language
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Investment Fund}
+  \begin{itemize}
+    \item Hierarchical
+    \item Big diversity
+    \item Proposals
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Decentralized Autonomous Organization}
+  \begin{itemize}
+    \item Like investment fund
+    \item On Ethereum
+    \item Proposals
+    \item Voting
+  \end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Hack}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}[fragile]
+  \frametitle{What has happened?}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      DAO Funding: May 2016
+      \begin{itemize}
+        \item 15 \% of ether
+        \item 12.7 M ether
+        \item 150 Mio \$
+      \end{itemize}
+    \end{column}
+    \pause
+    \begin{column}{0.5\textwidth}
+      Hacked: June 18, 2016
+      \begin{itemize}
+        \item 3.5 M ether
+        \item 45 Mio \$
+        \item 28 day countdown
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Split DAO}
+  \begin{itemize}
+    \item Needed to retrieve funds
+    \item Faulty
+  \end{itemize}
+  \begin{lstlisting}[language=Solidity]
+    // Burn DAO Tokens
+    Transfer(msg.sender, 0, balances[msg.sender]);
+    withdrawRewardFor(msg.sender); //xxx weak
+    // be nice, and get his rewards
+    totalSupply -= balances[msg.sender];
+    balances[msg.sender] = 0; //xxx weak
+    paidOut[msg.sender] = 0;
+    return true;
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Withdraw Reward For}
+  \begin{lstlisting}[language=Solidity]
+function withdrawRewardFor(address _account) noEther 
+internal returns (bool _success) {
+    if ((balanceOf(_account) * 
+      rewardAccount.accumulatedInput()) /
+      totalSupply < paidOut[_account])
+        throw;
+
+    uint reward =
+        (balanceOf(_account) * 
+          rewardAccount.accumulatedInput()) /
+          totalSupply - paidOut[_account];
+    if (!rewardAccount.payOut(_account, reward)) 
+      //payout here
+        throw;
+    paidOut[_account] += reward; //xxx weak
+    return true;
+}
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{PayOut}
+  \begin{itemize}
+    \item PayOut - Log
+    \item \textunderscore recipient.call.value - to attacker
+  \end{itemize}
+  \begin{lstlisting}[language=Solidity]
+    function payOut(address _recipient, uint _amount) returns (bool) {
+      if (msg.sender != owner || msg.value > 0 ||
+        (payOwnerOnly && _recipient != owner))
+          throw;
+
+      //xxx weak!!!
+      if (_recipient.call.value(_amount)()) { 
+          PayOut(_recipient, _amount);
+          return true;
+      } else {
+          return false;
+      }
+  }
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Call Stack}
+  \begin{itemize}
+    \item Don't go infinite - Stacks
+    \item Reset to 0 only in the end.
+  \end{itemize}
+  \begin{lstlisting}[language=Solidity]
+  splitDAO:
+    withdrawRewardFor:
+      rewardAccount.payOut:
+        _recipient.call.value:
+          splitDAO:
+            withdrawRewardFor:
+              rewardAccount.payOut:
+                _recipient.call.value:
+                  ...  
+                    splitDAO:
+                      withdrawRewardFor:
+                        rewardAccount.payOut:
+                          _recipient.call.value
+  \end{lstlisting}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{What next?}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{What happened next?}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      Hard Fork
+      \begin{itemize}
+        \item Ethereum Foundation
+        \item Same Name
+        \item Return all Money
+        \item Highly controversal
+      \end{itemize}
+    \end{column}
+    \pause
+    \begin{column}{0.5\textwidth}
+      Ethereum Classic
+      \begin{itemize}
+        \item New Cryptocurrency
+        \item Old Chain
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{Demo}%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \begin{frame}
+% \frametitle{Demo}
+% \url{https://daostats.github.io/proposals.html}
+% \end{frame}
 
 \end{document}

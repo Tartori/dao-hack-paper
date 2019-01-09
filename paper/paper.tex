@@ -136,7 +136,7 @@ The DAO includes the already mentioned functionality to split the DAO.
 This function was intended for people who either want to retrieve their funds or who weren't happy with the decisions of the DAO and wanted to invest differently.
 Everybody could split the DAO at any time with a one-week waiting period.
 
-The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut which in turn calls \textunderscore recipient.call.value. This last call to \textunderscore recipient.call.value is a call to the wallet of the attacker comparable to an synchronous api call. As it doesn't include any kind of gas the attacker can do whatever he desires, including recursively call the split dao function. The call.value function is used to transfer token to an address by calling a function on that address. In code the withdrawRewardFor and payOut look like this: \cite{deconstructingDaoAttack}
+The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut which in turn calls \textunderscore recipient.call.value. This last call to \textunderscore recipient.call.value is a call to the wallet of the attacker comparable to an synchronous api call. As it doesn't include any kind of limitations the attacker can do whatever he desires, including recursively call the split dao function. The call.value function is used to transfer token to an address by calling a function on that address. In code the withdrawRewardFor and payOut look like this: \cite{deconstructingDaoAttack}
 
 \begin{lstlisting}[language=Solidity]
   function withdrawRewardFor(address _account) noEther 

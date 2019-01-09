@@ -131,13 +131,13 @@ internal returns (bool _success) {
       rewardAccount.accumulatedInput()) /
       totalSupply < paidOut[_account])
         throw;
-
     uint reward =
         (balanceOf(_account) * 
           rewardAccount.accumulatedInput()) /
           totalSupply - paidOut[_account];
+    
+    //payout here
     if (!rewardAccount.payOut(_account, reward)) 
-      //payout here
         throw;
     paidOut[_account] += reward; //xxx weak
     return true;

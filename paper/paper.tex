@@ -2,6 +2,12 @@
 \documentclass[a4paper, 11pt]{scrartcl}
 
 \usepackage{csquotes}
+
+
+\usepackage{listings}
+\input{solidity-highlighting.tex}
+
+
 %%\usepackage[french]{babel}
 %%\usepackage[ngerman]{babel}
 
@@ -45,8 +51,6 @@ We will give an overview of the security bug and on the fallout that followed.
 \clearpage
 
 \section{Introduction}
-
-\section{What happened?}
 
 To correctly understand what has happened, first, one needs to have a proper foundation.
 This first section is composed of those foundations. In the section after that, there is information about the attack.
@@ -136,7 +140,7 @@ Everybody could split the DAO at any time with a one-week waiting period.
 
 The split function contains a function called withdrawRewardFor which calls rewardAccount.payOut which in turn calls \textunderscore recipient.call.value. The first two functions are defined in the DAO code and as an attacker can't change it at will. The call to the recipient, however, is in the attacker's hands and as such, he can do there whatever he desires. This function is used to transfer token to an address by calling a function on that address. In code this looks like that: \cite{deconstructingDaoAttack}
 
-\begin{verbatim}
+\begin{lstlisting}[language=Solidity]
   function withdrawRewardFor(address _account) noEther 
     internal returns (bool _success) {
         if ((balanceOf(_account) * rewardAccount.accumulatedInput()) /
@@ -163,13 +167,13 @@ The split function contains a function called withdrawRewardFor which calls rewa
             return false;
         }
     }
-\end{verbatim}
+\end{lstlisting}
 
 One remark to this, some days before the attack there was a security fix proposed to the DAO master on Github but wasn't committed immediately. With this fix, the attack would not have been possible in this form. \cite{securityFixPayout}
 
 Even though this had flaws, it alone wouldn't have been enough for this particular exploit. One more glaring flaw is in the splitDAO function itself: \cite{deconstructingDaoAttack}
 
-\begin{verbatim}
+\begin{lstlisting}[language=Solidity]
         // Burn DAO Tokens
         Transfer(msg.sender, 0, balances[msg.sender]);
         withdrawRewardFor(msg.sender); // be nice, and get his rewards
@@ -177,25 +181,25 @@ Even though this had flaws, it alone wouldn't have been enough for this particul
         balances[msg.sender] = 0;
         paidOut[msg.sender] = 0;
         return true;
-\end{verbatim}
+\end{lstlisting}
 
 As you can see from this snippet which comes from the splitDAO function, the withdrawRewardFor function gets called, and then the balance of the sender gets set to 0. This way, if someone can call splitDAO recursively, withdrawRewardFor gets called multiple times with the same arguments. With this, anybody could retrieve the whole investment by recursively calling splitDAO. However, it is important to note that if the call stack gets too big, it might fail due to a stack overflow or other issues. Thus, one attacker can only retrieve a limited amount of ether. The call stack would look something like this: \cite{deconstructingDaoAttack}
 
-\begin{verbatim}
-splitDAO:
-  withdrawRewardFor:
-    rewardAccount.payOut:
-      _recipient.call.value:
-        splitDAO:
-          withdrawRewardFor:
-            rewardAccount.payOut:
-              _recipient.call.value:
-                ...  
-                  splitDAO:
-                    withdrawRewardFor:
-                      rewardAccount.payOut:
-                        _recipient.call.value
-\end{verbatim}
+\begin{lstlisting}[language=Solidity]
+  splitDAO:
+    withdrawRewardFor:
+      rewardAccount.payOut:
+        _recipient.call.value:
+          splitDAO:
+            withdrawRewardFor:
+              rewardAccount.payOut:
+                _recipient.call.value:
+                  ...  
+                    splitDAO:
+                      withdrawRewardFor:
+                        rewardAccount.payOut:
+                          _recipient.call.value
+\end{lstlisting}
 
 After the attacker exploited this, he had a child DAO with more funds than it should have and a parent DAO which doesn't suspect that anything went wrong. To make things even worse, he was able to send back tokens to restart the attack. Only this way he was able to get this many ether out of it. \cite{deconstructingDaoAttack}
 
